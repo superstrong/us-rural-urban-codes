@@ -1,10 +1,11 @@
 import json
 import csv
 
-zips_to_ru_codes_dict = dict()
+zips_with_details_dict = dict()
 cities_dict = dict()
 zips_dict = dict()
 counties_dict = dict()
+zips_to_ru_codes_list = []
 
 code_found = set()
 code_fallback_city = set()
@@ -24,7 +25,7 @@ def zips_with_ru_codes():
             for row in zips:
                 zc = str(row[0])
                 code = str(row[7])
-                zips_to_ru_codes_dict[zc] = int(code)
+                zips_with_details_dict[zc] = int(code)
     except IOError:
         print("I/O read error")
 
@@ -62,7 +63,7 @@ def cities_with_zips():
 
 # Find an RuUr code by zip
 def find_code_for_entry(z):
-    _code_from_zip = zips_to_ru_codes_dict.get(z)
+    _code_from_zip = zips_with_details_dict.get(z)
     if _code_from_zip is not None:
         code_found.add(z)
         return _code_from_zip # found a code for that zip
@@ -138,15 +139,24 @@ def heal_missing_ru_codes():
                     _code_from_county = _county_entry['code']
                     code_fallback_county.add(z + " (" + f + ", " + str(_code_from_county) + ")")
                     zips_dict[z]['code'] = _code_from_county # found a code from county
+                    c = _code_from_county
                 else:
                     _cities = zips_dict[z].get('city')
                     code_missing.add(z + " (" + str(_cities) + ")")
+        zips_to_ru_codes_list.append({'zip_code': z, 'rural_urban_code': c})
 
 
     # Dump the final dict of zip codes with details to JSON file
     try:
         with open('./output/zip_codes_with_details.json', 'w') as zip_dictionary_file:
             json.dump(zips_dict, zip_dictionary_file)
+    except IOError:
+        print("I/O write error")
+
+    # Dump the smaller list of zip codes with RuUr codes to JSON file
+    try:
+        with open('./output/zip_codes_with_ru_codes.json', 'w') as zip_dictionary_file:
+            json.dump(zips_to_ru_codes_list, zip_dictionary_file)
     except IOError:
         print("I/O write error")
 
