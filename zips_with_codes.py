@@ -5,6 +5,7 @@ zips_with_details_dict = dict()
 cities_dict = dict()
 zips_dict = dict()
 counties_dict = dict()
+zips_counties_db_dict = dict()
 zips_to_ru_codes_list = []
 
 code_found = set()
@@ -109,7 +110,20 @@ def generate_zip_details():
 
 
 
-## Generate County -> Zip Codes
+## Generated Zip -> County from US Database
+def zips_counties_db():
+    try:
+        with open('./source/zip_code_database.csv', newline='') as csvfile:
+            zips = csv.reader(csvfile, delimiter=',', quotechar='|')
+            for row in zips:
+                zips_counties_db_dict[str(row[0])] = row[17] # zip_code: st-county
+
+    except IOError:
+        print("I/O read error")   
+
+
+
+## Generate County -> Ru Codes
 def counties_with_ru_codes():
     for z in zips_dict:
         _zip_county = zips_dict[z].get('county')
@@ -132,8 +146,8 @@ def heal_missing_ru_codes():
     for z in zips_dict:
         c = zips_dict[z].get('code')
         if not c:
-            _found_county = zips_dict[z]['county']
-            for f in _found_county:
+            f = zips_counties_db_dict.get(z)
+            if f is not None:
                 _county_entry = counties_dict.get(f)
                 if (_county_entry is not None) and (_county_entry['code']):
                     _code_from_county = _county_entry['code']
@@ -165,6 +179,7 @@ def heal_missing_ru_codes():
 zips_with_ru_codes()
 cities_with_zips()
 generate_zip_details()
+zips_counties_db()
 counties_with_ru_codes()
 heal_missing_ru_codes()
 
